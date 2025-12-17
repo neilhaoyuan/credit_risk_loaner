@@ -3,6 +3,7 @@ import pandas as pd
 import xgboost as xgb 
 import numpy as np 
 import os
+import json
 
 # Get the folder where app.py is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -33,7 +34,7 @@ def preprocess_input(input_dict):
 
     # Add any missing dummy columns (to match training set)
     for col in all_training_columns:   # you define this list below
-        if col not in df_encoded:
+        if col not in df_encoded.columns:
             df_encoded[col] = 0
 
     # Ensure correct column order
@@ -41,35 +42,11 @@ def preprocess_input(input_dict):
 
     return df_encoded
 
-all_training_columns = [
-    "person_age",
-    "person_income",
-    "person_emp_exp",
-    "loan_amnt",
-    "loan_int_rate",
-    "loan_percent_income",
-    "cb_person_cred_hist_length",
-    "credit_score",
-    "person_gender_female",
-    "person_gender_male",
-    "person_education_Associate",
-    "person_education_Bachelor",
-    "person_education_Doctorate",
-    "person_education_High_School",
-    "person_education_Master",
-    "person_home_ownership_MORTGAGE",
-    "person_home_ownership_OTHER",
-    "person_home_ownership_OWN",
-    "person_home_ownership_RENT",
-    "loan_intent_DEBTCONSOLIDATION",
-    "loan_intent_EDUCATION",
-    "loan_intent_HOMEIMPROVEMENT",
-    "loan_intent_MEDICAL",
-    "loan_intent_PERSONAL",
-    "loan_intent_VENTURE",
-    "previous_loan_defaults_on_file_No",
-    "previous_loan_defaults_on_file_Yes"
-]
+COLUMNS_PATH = os.path.join(BASE_DIR, "training_columns.json")
+
+with open(COLUMNS_PATH, "r") as f:
+    all_training_columns = json.load(f)
+
 
 # -----------------------
 # Input fields
@@ -83,8 +60,8 @@ person_emp_exp = st.number_input("Number of Years Worked", min_value = 0)
 person_home_ownership = st.selectbox("Home Ownership Type", ["RENT", "OWN", "MORTGAGE", "OTHER"])
 loan_amnt = st.number_input("Loan Amount Requested ($)", min_value = 0)
 loan_intent = st.selectbox("Loan Intent", ["PERSONAL", "MEDICAL", "EDUCATION", "VENTURE", "HOMEIMPROVEMENT", "DEBTCONSOLIDATION"])
-loan_int_rate = st.number_input("Loan Interest Rate (%)", min_value = 0)
-loan_percent_income = (st.number_input("What Percent of your Income is the Loan? (%)", min_value = 0)) / 100
+loan_int_rate = round(st.number_input("Loan Interest Rate (%)", min_value = 0.0, step=0.01),2)
+loan_percent_income = round(st.number_input("What Percent of your Income is the Loan? (%)", min_value = 0.0, step=0.01)/100, 4)
 cb_person_cred_hist_length = st.number_input("Credit History Length (Years)", min_value=0)
 credit_score = st.number_input("Credit Score", min_value=300, max_value=900)
 previous_loan_defaults_on_file = st.selectbox("Previous Loan Defaults on File?", ["No", "Yes"])
@@ -106,17 +83,44 @@ input_data = {
 }
 
 if st.button("Predict Loan Approval"):
-    processed=preprocess_input(input_data)
+
+    # -----------------------
+    # Sanity checks (input validity only)
+    # -----------------------
+
+    if person_age < 18:
+        st.error("Applicant must be at least 18 years old.")
+        st.stop()
+
+    if person_income <= 0:
+        st.error("Annual income must be greater than $0.")
+        st.stop()
+
+    if loan_amnt <= 0:
+        st.error("Loan amount must be greater than $0.")
+        st.stop()
+
+    if not (300 <= credit_score <= 900):
+        st.error("Credit score must be between 300 and 900.")
+        st.stop()
+
+    if loan_percent_income <= 0 or loan_percent_income > 1:
+        st.error("Loan percent of income must be between 0% and 100%.")
+        st.stop()
+
+    # -----------------------
+    # Model prediction
+    # -----------------------
+
+    processed = preprocess_input(input_data)
     dmatrix = xgb.DMatrix(processed)
 
     prob = float(model.predict(dmatrix)[0])
-    prob_display = round(prob, 4)
 
     st.subheader("Prediction Result")
-    st.write(f"Approval Probability: **{prob_display}**")
+    st.write(f"Approval Probability: **{prob:.4f}**")
 
     if prob >= 0.914:
         st.success("Your loan is likely to be Approved ✔️")
     else:
         st.error("Your loan is likely to be Denied ❌")
-
