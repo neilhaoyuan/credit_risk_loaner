@@ -5,6 +5,7 @@ import numpy as np
 import os
 import json
 
+
 # Get the folder where app.py is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "loan_model.json")
@@ -20,10 +21,8 @@ st.write("Fill in the form below.")
 def preprocess_input(input_dict):
     df = pd.DataFrame([input_dict])
 
-    # Fix categorical formatting
     df["person_education"] = df["person_education"].str.replace(" ", "_")
 
-    # Categories
     df_encoded = pd.get_dummies(df, columns=[
         'person_gender',
         'person_education',
@@ -32,12 +31,28 @@ def preprocess_input(input_dict):
         'previous_loan_defaults_on_file'
     ], dtype=int)
 
-    # Add any missing dummy columns (to match training set)
-    for col in all_training_columns:   # you define this list below
+    #matching the TRAINING cuz different, Rename to dti_ratio
+    df_encoded.rename(columns={'loan_percent_income': 'dti_ratio'}, inplace=True)
+
+    #matching the TRAINING: Adding engineered features
+    dti_ratio_preference = 0.4
+    credit_score_preference = 600
+
+    df_encoded['high_dti_low_credit'] = (
+        (df_encoded['dti_ratio'] > dti_ratio_preference) & 
+        (df_encoded['credit_score'] < credit_score_preference)
+    ).astype(int)
+
+    df_encoded['stable_homeowner'] = (
+        (df_encoded.get('person_home_ownership_OWN', 0) == 1) & 
+        (df_encoded['person_emp_exp'] > 5)
+    ).astype(int)
+
+    # Adding any missing dummy columns 
+    for col in all_training_columns:
         if col not in df_encoded.columns:
             df_encoded[col] = 0
 
-    # Ensure correct column order
     df_encoded = df_encoded[all_training_columns]
 
     return df_encoded
@@ -84,9 +99,6 @@ input_data = {
 
 if st.button("Predict Loan Approval"):
 
-    # -----------------------
-    # Sanity checks (input validity only)
-    # -----------------------
 
     if person_age < 18:
         st.error("Applicant must be at least 18 years old.")
