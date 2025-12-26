@@ -5,17 +5,15 @@ import numpy as np
 import os
 import json
 
-
-# Get the folder where app.py is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "loan_model.json")
 model = xgb.Booster()
 model.load_model(MODEL_PATH)
 
 
-st.set_page_config(page_title="Loan Approval Predictor", page_icon="💸")
+st.set_page_config(page_title="Loan Approval Predictor: ", page_icon="💸")
 
-st.title("Loan Approval Prediction App")
+st.title("💸Loan Approval Prediction App")
 st.write("Fill in the form below.")
 
 def preprocess_input(input_dict):
@@ -34,7 +32,6 @@ def preprocess_input(input_dict):
     #matching the TRAINING cuz different, Rename to dti_ratio
     df_encoded.rename(columns={'loan_percent_income': 'dti_ratio'}, inplace=True)
 
-    #matching the TRAINING: Adding engineered features
     dti_ratio_preference = 0.4
     credit_score_preference = 600
 
@@ -48,7 +45,6 @@ def preprocess_input(input_dict):
         (df_encoded['person_emp_exp'] > 5)
     ).astype(int)
 
-    # Adding any missing dummy columns 
     for col in all_training_columns:
         if col not in df_encoded.columns:
             df_encoded[col] = 0
@@ -97,6 +93,46 @@ input_data = {
     "previous_loan_defaults_on_file": previous_loan_defaults_on_file
 }
 
+##--------------------------------
+##Adding risk tolerance/threshold input section here so we can give to user
+st.markdown("----")
+st.subheader("🚨🎯Risk Tolerance Settings🎯🚨")
+st.write("Select you desired approval threshold, based on your risk tolerance.")
+st.write("Higher threshold means stricter approval criteria (lower risk tolerance).")
+st.write("This is essentially a confidence level for the model, what is the rate of confidence you want the model to have, for it to approve the loan?")
+st.write("For example, if you select 0.914, the model will only approve loans where it is at least 91.4% confident that the loan should be approved.")
+st.write("You can adjust this threshold based on your risk tolerance, and values")
+
+threshold_choice = st.radio(
+    "Select Approval Threshold:",
+    ["Aggresive (0.198) - KS Ratio Optimized threshold, which will approve more loans but with higher risk",
+     "Balanced (0.5) - Neutral threshold, optimized for balanced approvals and denials, and quality results with both",
+     "Conservative (0.914) - High confidence threshold, which will approve fewer loans but with lower risk",
+     "Custom - Set your own threshold value"], index=2 #Default to Conservative
+)
+
+if "Aggresive" in threshold_choice:
+    threshold = 0.198
+    risk_description = "Less risk averse, prefer model to be only 19.8% confident to approve"
+elif "Balanced" in threshold_choice:
+    threshold = 0.5
+    risk_description = "Neutral risk tolerance, prefer model to be at least 50% confident to approve"
+elif "Conservative" in threshold_choice:
+    threshold = 0.914
+    risk_description = "More risk averse, prefer model to be at least 91.4% confident to approve"
+else:
+    threshold = st.number_input(
+        "Enter custom threshold value (between 0 and 1):",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.5,
+        step=0.01,
+        help="Lower values(Less risk averse) = you are okay with model being less confident to approve loans, Higher values(More risk averse) = you want model to be more confident to approve loans"
+    )
+    risk_description = f"**Custom threshold**: Using threshold of {threshold:.3f}"
+
+st.info(risk_description)
+
 if st.button("Predict Loan Approval"):
 
 
@@ -130,9 +166,10 @@ if st.button("Predict Loan Approval"):
     prob = float(model.predict(dmatrix)[0])
 
     st.subheader("Prediction Result")
-    st.write(f"Approval Probability: **{prob:.4f}**")
+    st.write(f"**Approval Probability:** {prob:.4f} ({prob*100:.2f}%)")
+    st.write(f"**Threshold Used:** {threshold:.3f}")
 
-    if prob >= 0.914:
+    if prob >= threshold:
         st.success("Your loan is likely to be Approved ✔️")
     else:
         st.error("Your loan is likely to be Denied ❌")
