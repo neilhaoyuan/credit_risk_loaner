@@ -13,36 +13,30 @@ model.load_model(MODEL_PATH)
 
 st.set_page_config(page_title="Loan Approval Predictor: ", page_icon="💸")
 
-st.title("💸Loan Approval Prediction App")
-st.write("Fill in the form below.")
+st.title("💸 Loan Default Risk Prediction App")
+st.write("Fill in the form below to assess default risk.")
 
 def preprocess_input(input_dict):
     df = pd.DataFrame([input_dict])
 
-    df["person_education"] = df["person_education"].str.replace(" ", "_")
-
     df_encoded = pd.get_dummies(df, columns=[
-        'person_gender',
-        'person_education',
-        'person_home_ownership',
-        'loan_intent',
-        'previous_loan_defaults_on_file'
+        'Education',
+        'EmploymentType',
+        'MaritalStatus',
+        'LoanPurpose',
     ], dtype=int)
-
-    #matching the TRAINING cuz different, Rename to dti_ratio
-    df_encoded.rename(columns={'loan_percent_income': 'dti_ratio'}, inplace=True)
 
     dti_ratio_preference = 0.4
     credit_score_preference = 600
 
     df_encoded['high_dti_low_credit'] = (
-        (df_encoded['dti_ratio'] > dti_ratio_preference) & 
-        (df_encoded['credit_score'] < credit_score_preference)
+        (df_encoded['DTIRatio'] > dti_ratio_preference) & 
+        (df_encoded['CreditScore'] < credit_score_preference)
     ).astype(int)
 
     df_encoded['stable_homeowner'] = (
-        (df_encoded.get('person_home_ownership_OWN', 0) == 1) & 
-        (df_encoded['person_emp_exp'] > 5)
+        (df_encoded['HasMortgage'] == 1) & 
+        (df_encoded['MonthsEmployed'] > 60)
     ).astype(int)
 
     for col in all_training_columns:
@@ -63,97 +57,107 @@ with open(COLUMNS_PATH, "r") as f:
 # Input fields
 # -----------------------
 
-person_age = st.number_input("Age", min_value=18, value=30)
-person_gender = st.selectbox("Gender", ["female", "male"])
-person_education = st.selectbox("Highest Education", ["High School", "Associate", "Bachelor", "Master", "Doctorate"])
-person_income = st.number_input("Annual Income ($)", min_value = 0)
-person_emp_exp = st.number_input("Number of Years Worked", min_value = 0)
-person_home_ownership = st.selectbox("Home Ownership Type", ["RENT", "OWN", "MORTGAGE", "OTHER"])
-loan_amnt = st.number_input("Loan Amount Requested ($)", min_value = 0)
-loan_intent = st.selectbox("Loan Intent", ["PERSONAL", "MEDICAL", "EDUCATION", "VENTURE", "HOMEIMPROVEMENT", "DEBTCONSOLIDATION"])
-loan_int_rate = round(st.number_input("Loan Interest Rate (%)", min_value = 0.0, step=0.01),2)
-loan_percent_income = round(st.number_input("What Percent of your Income is the Loan? (%)", min_value = 0.0, step=0.01)/100, 4)
-cb_person_cred_hist_length = st.number_input("Credit History Length (Years)", min_value=0)
-credit_score = st.number_input("Credit Score", min_value=300, max_value=900)
-previous_loan_defaults_on_file = st.selectbox("Previous Loan Defaults on File?", ["No", "Yes"])
+Age = st.number_input("Age", min_value=18, value=30)
+Income = st.number_input("Annual Income ($)", min_value=0, value=50_000)
+MonthsEmployed = st.number_input("Months Employed", min_value=0, value=24)
+LoanAmount = st.number_input("Loan Amount Requested ($)", min_value=0, value=10_000)
+InterestRate = round(st.number_input("Loan Interest Rate (%)", min_value=0.0, step=0.01, value=10.0), 2)
+DTIRatio = round(st.number_input("Debt-to-Income Ratio (as decimal, e.g., 0.3 for 30%)", min_value=0.0, max_value=1.0, step=0.01, value=0.3), 4)
+CreditScore = st.number_input("Credit Score", min_value=300, max_value=900, value=650)
+NumCreditLines = st.number_input("Number of Credit Lines", min_value=0, value=3)
+LoanTerm = st.number_input("Loan Term (months)", min_value=1, value=36)
+
+Education = st.selectbox("Highest Education", ["High School", "Associate's", "Bachelor's", "Master's", "Doctorate"])
+EmploymentType = st.selectbox("Employment Type", ["Full-time", "Part-time", "Self-employed", "Unemployed"])
+MaritalStatus = st.selectbox("Marital Status", ["Single", "Married", "Divorced"])
+LoanPurpose = st.selectbox("Loan Purpose", ["Auto", "Business", "Education", "Home", "Medical", "Other"])
+
+HasMortgage = 1 if st.selectbox("Has Mortgage?", ["No", "Yes"]) == "Yes" else 0
+HasDependents = 1 if st.selectbox("Has Dependents?", ["No", "Yes"]) == "Yes" else 0
+HasCoSigner = 1 if st.selectbox("Has Co-Signer?", ["No", "Yes"]) == "Yes" else 0
 
 input_data = {
-    "person_age": person_age,
-    "person_gender": person_gender,
-    "person_education": person_education,
-    "person_income": person_income,
-    "person_emp_exp": person_emp_exp,
-    "person_home_ownership": person_home_ownership,
-    "loan_amnt": loan_amnt,
-    "loan_intent": loan_intent,
-    "loan_int_rate": loan_int_rate,
-    "loan_percent_income": loan_percent_income,
-    "cb_person_cred_hist_length": cb_person_cred_hist_length,
-    "credit_score": credit_score,
-    "previous_loan_defaults_on_file": previous_loan_defaults_on_file
+    "Age": Age,
+    "Income": Income,
+    "MonthsEmployed": MonthsEmployed,
+    "LoanAmount": LoanAmount,
+    "InterestRate": InterestRate,
+    "DTIRatio": DTIRatio,
+    "CreditScore": CreditScore,
+    "NumCreditLines": NumCreditLines,
+    "LoanTerm": LoanTerm,
+    "Education": Education,
+    "EmploymentType": EmploymentType,
+    "MaritalStatus": MaritalStatus,
+    "LoanPurpose": LoanPurpose,
+    "HasMortgage": HasMortgage,
+    "HasDependents": HasDependents,
+    "HasCoSigner": HasCoSigner
 }
 
 ##--------------------------------
 ##Adding risk tolerance/threshold input section here so we can give to user
 st.markdown("----")
-st.subheader("🚨🎯Risk Tolerance Settings🎯🚨")
-st.write("Select you desired approval threshold, based on your risk tolerance.")
-st.write("Higher threshold means stricter approval criteria (lower risk tolerance).")
-st.write("This is essentially a confidence level for the model, what is the rate of confidence you want the model to have, for it to approve the loan?")
-st.write("For example, if you select 0.914, the model will only approve loans where it is at least 91.4% confident that the loan should be approved.")
-st.write("You can adjust this threshold based on your risk tolerance, and values")
+st.subheader("Risk Tolerance Settings")
+st.write("Select your desired risk threshold based on your lending strategy.")
+st.write("**Lower threshold** = More conservative (reject more loans to avoid defaults)")
+st.write("**Higher threshold** = More aggressive (approve more loans but accept higher risk)")
+st.write("")
+st.write("**How it works:** The model predicts the probability that a loan will default.")
+st.write("- If default probability >= threshold -> reject the loan")
+st.write("- If default probability < threshold -> approve the loan")
 
 threshold_choice = st.radio(
-    "Select Approval Threshold:",
-    ["Aggresive (0.198) - KS Ratio Optimized threshold, which will approve more loans but with higher risk",
-     "Balanced (0.5) - Neutral threshold, optimized for balanced approvals and denials, and quality results with both",
-     "Conservative (0.914) - High confidence threshold, which will approve fewer loans but with lower risk",
-     "Custom - Set your own threshold value"], index=2 #Default to Conservative
+    "Select Risk Threshold:",
+    ["Conservative (0.116) - KS-Optimized threshold, precise at predicting good loans but has little risk tolerance",
+     "Balanced (0.5) - Standard threshold, balances catching defaults vs approving good loans",
+     "Aggressive (0.914) - High-risk threshold, approves more loans but misses more defaults",
+     "Custom - Set your own threshold value"], 
+    index=0 
 )
 
-if "Aggresive" in threshold_choice:
-    threshold = 0.198
-    risk_description = "Less risk averse, prefer model to be only 19.8% confident to approve"
+if "Conservative" in threshold_choice:
+    threshold = 0.116
+    risk_description = "Will reject any loan with >11.6% default probability. Catches most defaults but may reject some good customers."
 elif "Balanced" in threshold_choice:
     threshold = 0.5
-    risk_description = "Neutral risk tolerance, prefer model to be at least 50% confident to approve"
-elif "Conservative" in threshold_choice:
+    risk_description = "Will reject any loan with >50% default probability. Standard risk-neutral approach."
+elif "Aggressive" in threshold_choice:
     threshold = 0.914
-    risk_description = "More risk averse, prefer model to be at least 91.4% confident to approve"
+    risk_description = "Will only reject loans with >91.4% default probability. Approves most loans but accepts higher default risk."
 else:
     threshold = st.number_input(
         "Enter custom threshold value (between 0 and 1):",
         min_value=0.0,
         max_value=1.0,
-        value=0.5,
+        value=0.116,
         step=0.01,
-        help="Lower values(Less risk averse) = you are okay with model being less confident to approve loans, Higher values(More risk averse) = you want model to be more confident to approve loans"
+        help="Lower threshold = More conservative (reject if default risk > threshold). Higher threshold = More aggressive (only reject very high-risk loans)."
     )
-    risk_description = f"**Custom threshold**: Using threshold of {threshold:.3f}"
+    risk_description = f"**Custom threshold:** Will reject loans with >{threshold:.1%} default probability"
 
 st.info(risk_description)
 
-if st.button("Predict Loan Approval"):
+if st.button("Predict Loan Risk"):
 
-
-    if person_age < 18:
+    if Age < 18:
         st.error("Applicant must be at least 18 years old.")
         st.stop()
 
-    if person_income <= 0:
+    if Income <= 0:
         st.error("Annual income must be greater than $0.")
         st.stop()
 
-    if loan_amnt <= 0:
+    if LoanAmount <= 0:
         st.error("Loan amount must be greater than $0.")
         st.stop()
 
-    if not (300 <= credit_score <= 900):
+    if not (300 <= CreditScore <= 900):
         st.error("Credit score must be between 300 and 900.")
         st.stop()
 
-    if loan_percent_income <= 0 or loan_percent_income > 1:
-        st.error("Loan percent of income must be between 0% and 100%.")
+    if DTIRatio <= 0 or DTIRatio > 1:
+        st.error("DTI Ratio must be between 0 and 1.")
         st.stop()
 
     # -----------------------
@@ -163,13 +167,13 @@ if st.button("Predict Loan Approval"):
     processed = preprocess_input(input_data)
     dmatrix = xgb.DMatrix(processed)
 
-    prob = float(model.predict(dmatrix)[0])
+    default_prob = float(model.predict(dmatrix)[0])
 
     st.subheader("Prediction Result")
-    st.write(f"**Approval Probability:** {prob:.4f} ({prob*100:.2f}%)")
+    st.write(f"**Default Probability:** {default_prob:.4f} ({default_prob*100:.2f}%)")
     st.write(f"**Threshold Used:** {threshold:.3f}")
 
-    if prob >= threshold:
-        st.success("Your loan is likely to be Approved ✔️")
-    else:
+    if default_prob >= threshold:
         st.error("Your loan is likely to be Denied ❌")
+    else:
+        st.success("Your loan is likely to be Approved ✔️")
