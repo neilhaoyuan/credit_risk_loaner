@@ -6,6 +6,16 @@ Loan Oracle is an end-to-end **credit risk modeling and decision support system*
 The project is built with transparency and real-world lending logic in mind, making it easy to understand, extend, and demonstrate.
 
 ---
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Jupyter-Notebook-orange?logo=jupyter&logoColor=white" />
+  <img src="https://img.shields.io/badge/Streamlit-Frontend-FF4B4B?logo=streamlit&logoColor=white" />
+  <img src="https://img.shields.io/badge/XGBoost-ML%20Model-006400" />
+  <img src="https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikit-learn&logoColor=white" />
+  <img src="https://img.shields.io/badge/Pandas-Data%20Processing-150458?logo=pandas&logoColor=white" />
+  <img src="https://img.shields.io/badge/NumPy-Numerical-013243?logo=numpy&logoColor=white" />
+  <img src="https://img.shields.io/badge/SciPy-Optimization-8CAAE6?logo=scipy&logoColor=white" />
+</p>
 
 ## What the project does
 
