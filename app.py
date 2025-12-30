@@ -10,6 +10,7 @@ MODEL_PATH = os.path.join(BASE_DIR, "loan_model.json")
 model = xgb.Booster()
 model.load_model(MODEL_PATH)
 
+# Sets up the page bar in the tabs list 
 st.set_page_config(
     page_title="Loan Oracle",
     page_icon="loanOracle.png",
@@ -25,11 +26,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# The logo at the start
 st.image("LoanOracleTitle.png", use_container_width=True)
 
-st.markdown("---")
+st.markdown("---") # These create page breaks (I love them)
 
-# User type selection
+# User type selection (Lender vs Borrower)
 col1, col2 = st.columns(2)
 with col1:
     if st.button("I'm a Lender", use_container_width=True, type="primary"):
@@ -42,7 +44,7 @@ with col2:
 if "user_type" not in st.session_state:
     st.session_state.user_type = None
 
-# Show selection prompt or continue
+# Explain what they've chosen (or tell them to choose)
 if st.session_state.user_type is None:
     st.info("Please select whether you're a lender or a borrower to continue.")
     st.stop()
@@ -170,6 +172,8 @@ st.info(profile_desc)
 
 st.markdown("---")
 
+# Actual model use done here and loan prediction outputs
+
 if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check My Approval Chances",
              use_container_width=True,
              type="primary"):
@@ -195,6 +199,12 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
     dmatrix = xgb.DMatrix(processed)
     default_prob = float(model.predict(dmatrix)[0])
     
+    monthly_payment = (LoanAmount * (InterestRate/100/12)) / (1 - (1 + InterestRate/100/12)**(-LoanTerm))
+    monthly_income = Income / 12
+
+    if (LoanAmount / Income > 5) or (monthly_payment > monthly_income * 0.5) or (Age + (LoanTerm / 12) > 75):
+        default_prob = 1.0 # Autoreject until Pranay adds in his thing
+
     st.markdown("---")
     st.subheader("Prediction Results")
 
@@ -220,19 +230,30 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
             st.markdown("**Suggestions to improve approval chances:**")
             suggestions = []
             if CreditScore < 650:
-                suggestions.append("- Improve your credit score by paying bills on time and reducing your credit use")
+                suggestions.append("- Improve your credit score by paying bills on time and reducing your credit use.")
             if DTIRatio > 0.4:
-                suggestions.append("- Lower your debt-to-income ratio by paying down your existing debts")
+                suggestions.append("- Lower your debt-to-income ratio by paying down your existing debts.")
             if MonthsEmployed < 24:
-                suggestions.append("- Build a greater employment history for better stability")
+                suggestions.append("- Build a greater employment history for better stability.")
             if not HasCoSigner and LoanAmount > Income * 0.3:
-                suggestions.append("- Consider adding a co-signer to strengthen the application")
-            
+                suggestions.append("- Consider adding a co-signer to strengthen the application.")
+            if LoanPurpose == 'Home':
+                if LoanAmount / Income > 10:
+                    suggestions.append("- Home loan exceeds 10x annual income. Consider raising your income or looking for a less expensive alternative.")
+            else: 
+                if LoanAmount / Income > 3:
+                    suggestions.append("- Loan amount exceeds 3x annual income. Consider raising your income or looking for a less expensive alternative.")
+                    
+            if monthly_payment > monthly_income * 0.5:
+                suggestions.append("- Monthly payment would exceed half of gross income. Increase your income, negotiate lower interest, or find a less expensive alternative.")
+
+            if Age + (LoanTerm / 12) > 75:
+                suggestions.append("- Loan term extends significantly into retirement years.")
             if suggestions:
                 for suggestion in suggestions:
                     st.write(suggestion)
             else:
-                st.write("- Consider applying with a different lender or adjusting loan terms")
+                st.write("- Consider applying with a different lender or adjusting loan terms.")
     else:
         if user_type == "lender":
             st.success("### ✅ Loan Recommended for Approval")
@@ -247,4 +268,5 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
 
 st.markdown("---")
 
+#Literally just a disclaimer at the bottom to not use as financial advice
 st.caption("**Disclaimer:** This tool provides risk estimates based on our machine learning model built on 250,000 cases of synthetic data and should not be considered as financial advice or guarantee of a loan approval/denial. Actual lending decisions require additional factors and human judgement. Please consult with professionals for proper guidance.")
