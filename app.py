@@ -149,20 +149,20 @@ risk_profile = st.radio(
 )
 
 if risk_profile == "Conservative":
-    threshold = 0.116
-    profile_desc = "**Conservative:** Prioritizes capital preservation. Only accepts applicants with very low risk."
+    threshold = 0.2
+    profile_desc = "**Conservative:**(0.2) Prioritizes capital preservation. Only accepts applicants with very low risk."
 elif risk_profile == "Balanced":
-    threshold = 0.35
-    profile_desc = "**Balanced**: Balances approval volume with default protection."
+    threshold = 0.50964624
+    profile_desc = "**Balanced**: (0.51 KS Optimized) Balances approval volume with default protection."
 elif risk_profile == "Aggressive":
-    threshold = 0.55
-    profile_desc = "**Aggressive**: Maximizes approvals while accepting higher default risk."
+    threshold = 0.8
+    profile_desc = "**Aggressive**: (0.8)Maximizes approvals while accepting higher default risk."
 else:
     threshold = st.slider(
         "Custom Risk Threshold",
         min_value=0.001,
         max_value=0.999,
-        value=0.420,
+        value=0.50,
         step=0.01,
         help="Applications with probability of default below this threshold will be approved."
     )
@@ -269,4 +269,4 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
 st.markdown("---")
 
 #Literally just a disclaimer at the bottom to not use as financial advice
-st.caption("**Disclaimer:** This tool provides risk estimates based on our machine learning model built on 250,000 cases of synthetic data and should not be considered as financial advice or guarantee of a loan approval/denial. Actual lending decisions require additional factors and human judgement. Please consult with professionals for proper guidance.")
+st.caption("**Disclaimer:** This tool provides risk estimates based on our machine learning model trained on 60,000 balanced credit profiles (F1-score: 0.68). This should not be considered as financial advice or guarantee of loan approval/denial. Actual lending decisions require additional factors and human judgment. Consult with financial professionals for proper guidance.")
