@@ -100,7 +100,9 @@ with left:
     Income = st.number_input("Annual Income ($)", min_value=0, value=50_000, help="Total annual income before taxes")
     MonthsEmployed = st.number_input("Months Employed", min_value=0, value=24)
     EmploymentType = st.selectbox("Employment Type", ["Full-time", "Part-time", "Self-employed", "Unemployed"])
-    Education = st.selectbox("Highest Education", ["High School", "Associate's", "Bachelor's", "Master's", "Doctorate"])
+    Education = st.selectbox("Highest Education", ["High School Diploma", "College Diploma", "Associate's", "Bachelor's", "Master's", "Doctorate"])
+    if Education == "College Diploma":
+        Education = "Associate's"
     MaritalStatus = st.selectbox("Marital Status", ["Single", "Married", "Divorced"])
     HasDependents = 1 if st.selectbox("Has Dependents?", ["No", "Yes"]) == "Yes" else 0
     HasMortgage = 1 if st.selectbox("Has Mortgage?", ["No", "Yes"]) == "Yes" else 0
@@ -114,7 +116,7 @@ with right:
     LoanAmount = st.number_input("Loan Amount Requested ($)", min_value=0, value=10_000)
     LoanTerm = st.number_input("Loan Term (months)", min_value=1, value=36, help="Repayment period in months")
     InterestRate = st.number_input("Loan Interest Rate (%)", min_value=0.0, step=0.01, value=10.0)
-    LoanPurpose = st.selectbox("Loan Purpose", ["Auto", "Business", "Education", "Home", "Medical", "Other"])
+    LoanPurpose = st.selectbox("Loan Purpose", ["Auto", "Business", "Education", "Home", "Other"])
     HasCoSigner = 1 if st.selectbox("Has Co-Signer?", ["No", "Yes"]) == "Yes" else 0
 
 input_data = {
@@ -150,13 +152,13 @@ risk_profile = st.radio(
 
 if risk_profile == "Conservative":
     threshold = 0.2
-    profile_desc = "**Conservative:**(0.2) Prioritizes capital preservation. Only accepts applicants with very low risk."
+    profile_desc = "**Conservative (20%):** Prioritizes capital preservation. Only accepts applicants with very low risk."
 elif risk_profile == "Balanced":
     threshold = 0.50964624
-    profile_desc = "**Balanced**: (0.51 KS Optimized) Balances approval volume with default protection."
+    profile_desc = "**Balanced (51% KS Optimized)**: Balances approval volume with default protection."
 elif risk_profile == "Aggressive":
     threshold = 0.8
-    profile_desc = "**Aggressive**: (0.8)Maximizes approvals while accepting higher default risk."
+    profile_desc = "**Aggressive (80%)**: Maximizes approvals while accepting higher default risk."
 else:
     threshold = st.slider(
         "Custom Risk Threshold",
@@ -190,7 +192,7 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
     if not (300 <= CreditScore <= 900):
         st.error("Credit score must be between 300 and 900.")
         st.stop()
-    if DTIRatio <= 0 or DTIRatio > 1:
+    if DTIRatio < 0 or DTIRatio > 1:
         st.error("DTI Ratio must be between 0 and 1.")
         st.stop()
     
@@ -202,8 +204,27 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
     monthly_payment = (LoanAmount * (InterestRate/100/12)) / (1 - (1 + InterestRate/100/12)**(-LoanTerm))
     monthly_income = Income / 12
 
-    if (LoanAmount / Income > 5) or (monthly_payment > monthly_income * 0.5) or (Age + (LoanTerm / 12) > 75):
-        default_prob = 1.0 # Autoreject until Pranay adds in his thing
+    base_prob = default_prob
+    reject_mult = 1
+    accept_mult = 1
+    # Reject mult
+    if (LoanAmount / Income > 10) and (LoanPurpose == "Home"):
+        reject_mult *= 5
+    elif LoanAmount / Income > 2:
+        reject_mult *= 5
+    if  LoanAmount / Income > 2:
+        reject_mult *= 1.5
+    if monthly_payment > monthly_income * 0.4:
+        reject_mult *= 4
+    if Age + (LoanTerm / 12) > 75:
+        reject_mult *= 3
+    # Accept mult
+    if LoanAmount / Income < 0.1:
+        accept_mult *= 0.6
+    if monthly_payment < monthly_income * 0.1:
+        accept_mult *= 0.6
+
+    default_prob = min(base_prob*reject_mult*accept_mult, 1.0)
 
     st.markdown("---")
     st.subheader("Prediction Results")
