@@ -146,20 +146,23 @@ st.caption("Adjust approval aggressiveness based on your preferences" if user_ty
 
 risk_profile = st.radio(
     "Risk Profile",
-    ["Conservative", "Balanced", "Aggressive", "Custom"],
+    ["Conservative", "Balanced", "Aggressive", "KS-Optimal", "Custom"],
     horizontal=True,
     help="Risk scores rank loans by relative default risk, they are not exact probabilities.  \nA 40% score does not mean a 40% chance of default."
 )
 
 if risk_profile == "Conservative":
     threshold = 0.2103
-    profile_desc = "**Conservative (21%):** Prioritizes capital preservation. Only accepts applicants with very low risk."
+    profile_desc = "**Conservative (~21%):** Prioritizes capital preservation. Only accepts applicants with very low risk."
 elif risk_profile == "Balanced":
     threshold = 0.3085
-    profile_desc = "**Balanced (31%)**: Balances approval volume with default protection. Optimizes f1 score."
+    profile_desc = "**Balanced (~31%)**: Balances approval volume with default protection. Optimizes f1 score."
 elif risk_profile == "Aggressive":
     threshold = 0.4106
-    profile_desc = "**Aggressive (41%)**: Maximizes approvals while accepting higher default risk."
+    profile_desc = "**Aggressive (~41%)**: Maximizes approvals while accepting higher default risk."
+elif risk_profile == "K-S Optimal":
+    threshold = 0.49979624
+    profile_desc = "**K-S Optimal (~50%)**: Maximizes seperation between defaulters and non-defaulters using Kolmogorov-Smirnov statistic."
 else:
     threshold = st.slider(
         "Custom Risk Threshold",
