@@ -263,11 +263,11 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
                 if LoanAmount / Income > 10:
                     suggestions.append("- Home loan exceeds 10x annual income. Consider raising your income or looking for a less expensive alternative.")
             else: 
-                if LoanAmount / Income > 3:
-                    suggestions.append("- Loan amount exceeds 3x annual income. Consider raising your income or looking for a less expensive alternative.")
+                if LoanAmount / Income > 2:
+                    suggestions.append("- Loan amount exceeds 2x annual income. Consider raising your income or looking for a less expensive alternative.")
                     
             if monthly_payment > monthly_income * 0.5:
-                suggestions.append("- Monthly payment would exceed half of gross income. Increase your income, negotiate lower interest, or find a less expensive alternative.")
+                suggestions.append("- Monthly payment would exceed 40% of gross income. Increase your income, negotiate lower interest, or find a less expensive alternative.")
 
             if Age + (LoanTerm / 12) > 75:
                 suggestions.append("- Loan term extends significantly into retirement years.")
