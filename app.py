@@ -5,7 +5,7 @@ import os
 import json
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "loan_model.json")
+MODEL_PATH = os.path.join(BASE_DIR, "model", "loan_model.json")
 
 model = xgb.Booster()
 model.load_model(MODEL_PATH)
@@ -13,7 +13,7 @@ model.load_model(MODEL_PATH)
 # Sets up the page bar in the tabs list 
 st.set_page_config(
     page_title="Loan Oracle",
-    page_icon="loanOracle.png",
+    page_icon=os.path.join(BASE_DIR, "assets", "loanOracle.png"),
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -27,7 +27,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # The logo at the start
-st.image("LoanOracleTitle.png", use_container_width=True)
+st.image(os.path.join(BASE_DIR, "assets", "LoanOracleTitle.png"), use_container_width=True)
 
 st.markdown("---") # These create page breaks (I love them)
 
@@ -86,7 +86,7 @@ def preprocess_input(input_dict):
     df_encoded = df_encoded[all_training_columns]
     return df_encoded
 
-COLUMNS_PATH = os.path.join(BASE_DIR, "training_columns.json")
+COLUMNS_PATH = os.path.join(BASE_DIR, "model", "training_columns.json")
 with open(COLUMNS_PATH, "r") as f:
     all_training_columns = json.load(f)
 
@@ -146,7 +146,7 @@ st.caption("Adjust approval aggressiveness based on your preferences" if user_ty
 
 risk_profile = st.radio(
     "Risk Profile",
-    ["Conservative", "Balanced", "Aggressive", "KS-Optimal", "Custom"],
+    ["Conservative", "Balanced", "Aggressive", "KS Optimal", "Custom"],
     horizontal=True,
     help="Risk scores rank loans by relative default risk, they are not exact probabilities.  \nA 40% score does not mean a 40% chance of default."
 )
@@ -160,15 +160,15 @@ elif risk_profile == "Balanced":
 elif risk_profile == "Aggressive":
     threshold = 0.4106
     profile_desc = "**Aggressive (~41%)**: Maximizes approvals while accepting higher default risk."
-elif risk_profile == "K-S Optimal":
+elif risk_profile == "KS Optimal":
     threshold = 0.49979624
-    profile_desc = "**K-S Optimal (~50%)**: Maximizes seperation between defaulters and non-defaulters using Kolmogorov-Smirnov statistic."
+    profile_desc = "**KS Optimal (~50%)**: Maximizes seperation between defaulters and non-defaulters using Kolmogorov-Smirnov statistic."
 else:
     threshold = st.slider(
         "Custom Risk Threshold",
         min_value=0.001,
         max_value=0.999,
-        value=0.50,
+        value=0.60,
         step=0.01,
         help="Applications with probability of default below this threshold will be approved."
     )
