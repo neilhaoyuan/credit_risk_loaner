@@ -152,14 +152,14 @@ risk_profile = st.radio(
 )
 
 if risk_profile == "Conservative":
-    threshold = 0.2103
-    profile_desc = "**Conservative (~21%):** Prioritizes capital preservation. Only accepts applicants with very low risk."
+    threshold = 0.2241
+    profile_desc = "**Conservative (~22%):** Prioritizes capital preservation. Only accepts applicants with very low risk."
 elif risk_profile == "Balanced":
-    threshold = 0.3085
-    profile_desc = "**Balanced (~31%)**: Balances approval volume with default protection. Optimizes f1 score."
+    threshold = 0.3262
+    profile_desc = "**Balanced (~33%)**: Balances approval volume with default protection. Optimizes f1 score."
 elif risk_profile == "Aggressive":
-    threshold = 0.4106
-    profile_desc = "**Aggressive (~41%)**: Maximizes approvals while accepting higher default risk."
+    threshold = 0.4264
+    profile_desc = "**Aggressive (~43%)**: Maximizes approvals while accepting higher default risk."
 elif risk_profile == "KS Optimal":
     threshold = 0.49979624
     profile_desc = "**KS Optimal (~50%)**: Maximizes seperation between defaulters and non-defaulters using Kolmogorov-Smirnov statistic."
