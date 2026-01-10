@@ -148,17 +148,18 @@ risk_profile = st.radio(
     "Risk Profile",
     ["Conservative", "Balanced", "Aggressive", "Custom"],
     horizontal=True,
+    help="Risk scores rank loans by relative default risk, they are not exact probabilities.  \nA 40% score does not mean a 40% chance of default."
 )
 
 if risk_profile == "Conservative":
-    threshold = 0.2
-    profile_desc = "**Conservative (20%):** Prioritizes capital preservation. Only accepts applicants with very low risk."
+    threshold = 0.2103
+    profile_desc = "**Conservative (21%):** Prioritizes capital preservation. Only accepts applicants with very low risk."
 elif risk_profile == "Balanced":
-    threshold = 0.50964624
-    profile_desc = "**Balanced (51% KS Optimized)**: Balances approval volume with default protection."
+    threshold = 0.3085
+    profile_desc = "**Balanced (31%)**: Balances approval volume with default protection. Optimizes f1 score."
 elif risk_profile == "Aggressive":
-    threshold = 0.8
-    profile_desc = "**Aggressive (80%)**: Maximizes approvals while accepting higher default risk."
+    threshold = 0.4106
+    profile_desc = "**Aggressive (41%)**: Maximizes approvals while accepting higher default risk."
 else:
     threshold = st.slider(
         "Custom Risk Threshold",
@@ -208,21 +209,21 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
     reject_mult = 1
     accept_mult = 1
     # Reject mult
-    if (LoanAmount / Income > 10) and (LoanPurpose == "Home"):
-        reject_mult *= 5
-    elif LoanAmount / Income > 2:
-        reject_mult *= 5
-    if  LoanAmount / Income > 2:
-        reject_mult *= 1.5
-    if monthly_payment > monthly_income * 0.4:
-        reject_mult *= 4
+    if LoanPurpose != "Home":
+        if  LoanAmount / Income > 2:
+            reject_mult *= 3
+        elif monthly_payment > monthly_income * 0.4:
+            reject_mult *= 3.5
+    else:
+        if (LoanAmount / Income > 10):
+            reject_mult *= 3
     if Age + (LoanTerm / 12) > 75:
-        reject_mult *= 3
+        reject_mult *= 2
     # Accept mult
     if LoanAmount / Income < 0.1:
-        accept_mult *= 0.6
+        accept_mult *= 0.5
     if monthly_payment < monthly_income * 0.1:
-        accept_mult *= 0.6
+        accept_mult *= 0.5
 
     default_prob = min(base_prob*reject_mult*accept_mult, 1.0)
 
@@ -290,4 +291,4 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
 st.markdown("---")
 
 #Literally just a disclaimer at the bottom to not use as financial advice
-st.caption("**Disclaimer:** This tool provides risk estimates based on our machine learning model trained on 60,000 balanced credit profiles (F1-score: 0.68). This should not be considered as financial advice or guarantee of loan approval/denial. Actual lending decisions require additional factors and human judgment. Consult with financial professionals for proper guidance.")
+st.caption("**Disclaimer:** This tool provides risk estimates based on our machine learning model trained on 60,000 balanced credit profiles (F1-score: 0.69). This should not be considered as financial advice or guarantee of loan approval/denial. Actual lending decisions require additional factors and human judgment. Consult with financial professionals for proper guidance.")
