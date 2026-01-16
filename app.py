@@ -97,8 +97,8 @@ with left:
     st.subheader("Borrower Profile" if user_type == "lender" else "Your Profile")
     st.caption("Demographic background")
     Age = st.number_input("Age", min_value=18, value=30)
-    Income = st.number_input("Annual Income ($)", min_value=0, value=50_000, help="Total annual income before taxes")
-    MonthsEmployed = st.number_input("Months Employed", min_value=0, value=24)
+    Income = st.number_input("Annual Income After Taxes ($)", min_value=0, value=50_000) * (1 - DTIRatio)
+    MonthsEmployed = (st.number_input("Years Employed", min_value=0, value=2)) * 12
     EmploymentType = st.selectbox("Employment Type", ["Full-time", "Part-time", "Self-employed", "Unemployed"])
     Education = st.selectbox("Highest Education", ["High School Diploma", "College Diploma", "Associate's", "Bachelor's", "Master's", "Doctorate"])
     if Education == "College Diploma":
@@ -213,14 +213,14 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
     # Reject mult
     if LoanPurpose != "Home":
         if  LoanAmount / Income > 2:
-            reject_mult *= 3
+            reject_mult *= 5
         elif monthly_payment > monthly_income * 0.4:
-            reject_mult *= 3.5
+            reject_mult *= 5.5
     else:
         if (LoanAmount / Income > 10):
-            reject_mult *= 3
+            reject_mult *= 6
     if Age + (LoanTerm / 12) > 75:
-        reject_mult *= 2
+        reject_mult *= 3
     # Accept mult
     if LoanAmount / Income < 0.1:
         accept_mult *= 0.5
