@@ -215,12 +215,12 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
     # Reject mult
     if LoanPurpose != "Home":
         if  LoanAmount / Income > 2:
-            reject_mult *= 5
+            reject_mult *= 6
         elif monthly_payment > monthly_income * 0.4:
             reject_mult *= 5.5
     else:
         if (LoanAmount / Income > 10):
-            reject_mult *= 6
+            reject_mult *= 7
     if Age + (LoanTerm / 12) > 75:
         reject_mult *= 3
     # Accept mult
@@ -264,11 +264,11 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
             if not HasCoSigner and LoanAmount > Income * 0.3:
                 suggestions.append("- Consider adding a co-signer to strengthen the application.")
             if LoanPurpose == 'Home':
-                if LoanAmount / Income > 10:
-                    suggestions.append("- Home loan exceeds 10x annual income. Consider raising your income or looking for a less expensive alternative.")
+                if LoanAmount / (Income / (1 - DTIRatio)) > 10:
+                    suggestions.append("- Home loan exceeds 10x annual income (adjusted for other debts). Consider raising your income or looking for a less expensive alternative.")
             else: 
                 if LoanAmount / Income > 2:
-                    suggestions.append("- Loan amount exceeds 2x annual income. Consider raising your income or looking for a less expensive alternative.")
+                    suggestions.append("- Loan amount exceeds 2x annual income (adjusted for other debts). Consider raising your income or looking for a less expensive alternative.")
                     
             if monthly_payment > monthly_income * 0.5:
                 suggestions.append("- Monthly payment would exceed 40% of gross income. Increase your income, negotiate lower interest, or find a less expensive alternative.")
