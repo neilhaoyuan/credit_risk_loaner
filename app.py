@@ -265,10 +265,10 @@ if st.button("🔍 Predict Loan Risk" if user_type == "lender" else "🔍 Check 
                 suggestions.append("- Consider adding a co-signer to strengthen the application.")
             if LoanPurpose == 'Home':
                 if LoanAmount / (Income / (1 - DTIRatio)) > 10:
-                    suggestions.append("- Home loan exceeds 10x annual income (adjusted for other debts). Consider raising your income or looking for a less expensive alternative.")
+                    suggestions.append("- Home loan exceeds 10x annual income. Consider raising your income or looking for a less expensive alternative.")
             else: 
                 if LoanAmount / Income > 2:
-                    suggestions.append("- Loan amount exceeds 2x annual income (adjusted for other debts). Consider raising your income or looking for a less expensive alternative.")
+                    suggestions.append("- Loan amount exceeds 2x annual income. Consider raising your income or looking for a less expensive alternative.")
                     
             if monthly_payment > monthly_income * 0.5:
                 suggestions.append("- Monthly payment would exceed 40% of gross income. Increase your income, negotiate lower interest, or find a less expensive alternative.")
@@ -296,5 +296,3 @@ st.markdown("---")
 
 #Literally just a disclaimer at the bottom to not use as financial advice
 st.caption("**Disclaimer:** This tool provides risk estimates based on our machine learning model trained on 60,000 balanced credit profiles (F1-score: 0.69). This should not be considered as financial advice or guarantee of loan approval/denial. Actual lending decisions require additional factors and human judgment. Consult with financial professionals for proper guidance.")
-st.markdown("---")
-st.caption("If you wanna check out the project, try: https://github.com/neilhaoyuan/credit_risk_loaner/tree/main")
