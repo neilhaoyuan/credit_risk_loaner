@@ -93,6 +93,8 @@ with open(COLUMNS_PATH, "r") as f:
 # Input fields
 left, right = st.columns([1,1])
 
+DTIRatio = 0
+
 with left:
     st.subheader("Borrower Profile" if user_type == "lender" else "Your Profile")
     st.caption("Demographic background")
