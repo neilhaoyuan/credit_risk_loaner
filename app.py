@@ -93,13 +93,11 @@ with open(COLUMNS_PATH, "r") as f:
 # Input fields
 left, right = st.columns([1,1])
 
-DTIRatio = 0
-
 with left:
     st.subheader("Borrower Profile" if user_type == "lender" else "Your Profile")
     st.caption("Demographic background")
     Age = st.number_input("Age", min_value=18, value=30)
-    Income = st.number_input("Annual Income After Taxes ($)", min_value=0, value=50_000) * (1 - DTIRatio)
+    Income = st.number_input("Annual Income After Taxes ($)", min_value=0, value=50_000) 
     MonthsEmployed = (st.number_input("Years Employed", min_value=0, value=2)) * 12
     EmploymentType = st.selectbox("Employment Type", ["Full-time", "Part-time", "Self-employed", "Unemployed"])
     Education = st.selectbox("Highest Education", ["High School Diploma", "College Diploma", "Associate's", "Bachelor's", "Master's", "Doctorate"])
@@ -120,6 +118,8 @@ with right:
     InterestRate = st.number_input("Loan Interest Rate (%)", min_value=0.0, step=0.01, value=10.0)
     LoanPurpose = st.selectbox("Loan Purpose", ["Auto", "Business", "Education", "Home", "Other"])
     HasCoSigner = 1 if st.selectbox("Has Co-Signer?", ["No", "Yes"]) == "Yes" else 0
+
+Income *= (1 - DTIRatio)
 
 input_data = {
     "Age": Age,
